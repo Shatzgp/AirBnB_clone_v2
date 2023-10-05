@@ -1,78 +1,34 @@
-# puppet to install nginx and configure it to serve some content
-exec {'update':
-path     => '/usr/bin',
-command  => 'sudo apt-get -y update',
-provider => 'shell',
+# puppet manifest preparing a server for static content deployment
+exec { 'apt-get-update':
+  command => '/usr/bin/env apt-get -y update',
 }
-->
-package { 'apache2.2-common':
-ensure => absent,
+-> exec {'b':
+  command => '/usr/bin/env apt-get -y install nginx',
 }
-->
-package { 'nginx':
-ensure  => installed,
-require => Package['apache2.2-common'],
+-> exec {'c':
+  command => '/usr/bin/env mkdir -p /data/web_static/releases/test/',
 }
-->
-service { 'nginx':
-ensure  => running,
-require => Package['nginx'],
+-> exec {'d':
+  command => '/usr/bin/env mkdir -p /data/web_static/shared/',
 }
-->
-file { '/data/':
-ensure => 'directory',
+-> exec {'e':
+  command => '/usr/bin/env echo "<html>
+  <head>
+  </head>
+  <body>
+	Holberton School
+  </body>
+</html>" > /data/web_static/releases/test/index.html',
 }
-->
-file { '/data/web_static/':
-ensure => 'directory',
+-> exec {'f':
+  command => '/usr/bin/env ln -sf /data/web_static/releases/test /data/web_static/current',
 }
-->
-file { '/data/web_static/shared/':
-ensure => 'directory',
+-> exec {'h':
+  command => '/usr/bin/env sed -i "/listen 80 default_server/a location /hbnb_static/ { alias /data/web_static/current/;}" /etc/nginx/sites-available/default',
 }
-->
-file { '/data/web_static/releases/':
-ensure => 'directory',
+-> exec {'i':
+  command => '/usr/bin/env chown -R ubuntu:ubuntu /data',
 }
-->
-file { '/data/web_static/releases/test/':
-ensure => 'directory',
-}
-->
-exec {'html file':
-path     => ['/usr/bin', '/bin'],
-command  => 'sudo touch /data/web_static/releases/test/index.html',
-provider => 'shell',
-}
-->
-exec {'write html':
-path     => ['/usr/bin', '/bin'],
-command  => 'sudo echo  "Holberton School" > /data/web_static/releases/test/index.html',
-provider => 'shell',
-}
-->
-exec {'symlink':
-path     => ['/usr/bin', '/bin'],
-command  => 'sudo ln -sf /data/web_static/releases/test/ /data/web_static/current',
-provider => 'shell',
-}
-->
-exec {'chown':
-path     => ['/usr/bin', '/bin'],
-command  => 'sudo chown -R ubuntu:ubuntu /data/',
-provider => 'shell',
-}
-->
-exec {'config':
-path     => ['/usr/bin', '/bin'],
-# lint:ignore:140chars
-command  => 'myc="\n\tlocation \/hbnb_static\/ {\n\t\talias \/data\/web_static\/current\/\;\n\t}\n"; st="server {"; sudo sed -i "s/^$st/$st$myc/" /etc/nginx/sites-enabled/default',
-# lint:endignore
-provider => 'shell',
-}
-->
-exec {'start nginx':
-path     => ['/usr/bin', '/bin', '/usr/sbin/'],
-command  => 'sudo service nginx start',
-provider => 'shell',
+-> exec {'g':
+  command => '/usr/bin/env service nginx restart',
 }
